@@ -3,6 +3,9 @@
   "version": "0.0.0",
   "description": "About Lit packages.",
   "type": "module",
+  "scripts": {
+    "build": "rollup -c ./rollup.config.mjs"
+  },
   "peerDependencies": {
     "lit": "^2.0.2"
   },
