@@ -49,14 +49,19 @@ export class ModelValue {
 
 
 export class ViewModel extends EventEmitter {
-  constructor(model = {}) {
+  constructor(model = null) {
     super();
-    this._modelMap = this.#_flatModel(model, '', new Map());
+    this._modelMap = new Map();
+    if (this.#_getModelTypeofInfo(model).name === 'object') {
+      this.#_flatModel(model, '', this._modelMap);
+    }
   }
 
   createData(chainId, model) {
-    this.delete(chainId);
-    this.#_flatModel(model, chainId, this._modelMap);
+    if (typeof chainId === 'string' && chainId !== '') {
+      this.delete(chainId);
+      this.#_flatModel(model, chainId, this._modelMap);
+    }
   }
 
   // state:            0            1       2        3     4
