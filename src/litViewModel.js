@@ -47,6 +47,7 @@ export class ModelValue {
   }
 }
 
+
 export class ViewModel extends EventEmitter {
   constructor(model = {}) {
     super();
@@ -58,41 +59,241 @@ export class ViewModel extends EventEmitter {
     this.#_flatModel(model, chainId, this._modelMap);
   }
 
-  set(chainId, value = null) {
-    this.#_allowTypeof(value);
+  // state:            0            1       2        3     4
+  // |-----------------|------------|-------|--------|-----|
+  //   undefined, null   pure value   Array   Object   ...
+  #_getModelTypeofInfo(value) {
+    let name = '';
+    let state = 1;
+    switch (value == null ? value : value.constructor) {
+      case undefined:
+        name = 'undefined';
+        state = 0;
+        break;
+      case null:
+        name = 'null';
+        state = 0;
+        break;
+      case String:
+        name = 'string';
+        break;
+      case Number:
+        name = isNaN(value) ? 'null' : 'number';
+        break;
+      case Boolean:
+        name = 'boolean';
+        break;
+      case Array:
+        name = 'array';
+        state = 2;
+        break;
+      case Object:
+        name = 'object';
+        state = 3;
+        break;
+      default:
+        name = 'other';
+        state = 4;
+        break;
+    }
+    return {name, state};
+  }
 
+  #_isNotPureData(value, data) {
+    switch (this.#_getModelTypeofInfo(value).name) {
+      case 'array':
+        value.forEach(val => this.#_isNotPureData(val, data));
+        break;
+      case 'object':
+        Object.values(value).forEach(val => this.#_isNotPureData(val, data));
+        break;
+      case 'other':
+        throw new Error(
+          _errorMessages.modelValueTypeNotExpected
+            .replaceAll('{{type}}', 'array')
+            .replaceAll('{{value}}', JSON.stringify(value)),
+        );
+        break;
+    }
+  }
+
+  #_transformPureData(data) {
+    return JSON.parse(JSON.stringify(data));
+  }
+
+  #_flatModel(value, currChain, newData) {
+    switch (this.#_getModelTypeofInfo(value).name) {
+      case 'undefined':
+      case 'null':
+        newData.set(currChain, null);
+        this.#_updateView(currChain, null);
+        break;
+      case 'string':
+      case 'number':
+      case 'boolean':
+        newData.set(currChain, value);
+        this.#_updateView(currChain, value);
+        break;
+      case 'array':
+        let newValue = this.#_transformPureData(value);
+        newData.set(currChain, newValue);
+        this.#_updateView(currChain, newValue);
+        break;
+      case 'object':
+        Object.entries(value).forEach(
+          item =>
+            this.#_flatModel(item[1], currChain + '.' + item[0], newData),
+        );
+        break;
+    }
+    return newData;
+  }
+
+  #_chainIdRegex = /^([^\[\]]+[^\[\].])(?:\[(\d+)\])?$/;
+
+  #_parseChainIdInfo(chainId) {
+    let matchChainId = chainId.match(this.#_chainIdRegex);
+    let ok = matchChainId !== null;
+    let index = ok ? matchChainId[2] : undefined;
+    let isArray = index !== undefined;
+    return {
+      ok,
+      isArray,
+      chainId: ok ? matchChainId[1] : '',
+      index: isArray ? parseInt(index) : -1,
+    };
+  }
+
+  #_getUpdateInfo(chainId, value = null) {
+    let valueType = 'null';
+    if (value !== null) {
+      this.#_isNotPureData(value);
+      valueType = this.#_getModelTypeofInfo(value).name;
+    }
+
+    let {
+      ok: isQuerryOk,
+      chainId: chainId_,
+      isArray: isQuerryArray,
+      index,
+    } = this.#_parseChainIdInfo(chainId);
     let modelMap = this._modelMap;
-    if (!modelMap.has(chainId)) {
-      console.error(new Error(
-        _errorMessages.chainIdNotExist.replaceAll('{{chainId}}', chainId),
-      ));
+
+    if (isQuerryOk && modelMap.has(chainId_)) {
+      let oldValue = modelMap.get(chainId_);
+      let oldValueType = this.#_getModelTypeofInfo(oldValue).name;
+
+      if (!isQuerryArray || oldValueType === 'array') {
+        let value_ = value;
+        if (isQuerryArray) {
+          switch (valueType) {
+            case 'array':
+            case 'object':
+              value_ = this.#_transformPureData(value);
+              break;
+          }
+        }
+
+        return {
+          ok: true,
+          chainId: chainId_,
+          oldValue,
+          oldValueType,
+          value: value_,
+          valueType,
+          isQuerryArray,
+          index,
+        };
+      }
+    }
+
+    console.error(new Error(
+      _errorMessages.chainIdNotExist.replaceAll('{{chainId}}', chainId),
+    ));
+    return {ok: false};
+  }
+
+  set(chainId, value = null) {
+    let {
+      ok: isCheckOk,
+      chainId: chainId_,
+      oldValue,
+      oldValueType,
+      valueType,
+      isQuerryArray,
+      index,
+    } = this.#_getUpdateInfo(chainId, value);
+
+    if (!isCheckOk) {
       return;
     }
 
-    modelMap.set(chainId, value);
-    this.#_updateView(chainId, value);
+    // Array 只能替換 Array 欄位
+    let isArrayForOldValue = oldValueType === 'array';
+    let isArrayForValue = valueType === 'array';
+    if (!isQuerryArray && isArrayForOldValue !== isArrayForValue) {
+      return;
+    }
+
+    let modelMap = this._modelMap;
+    let value_ = value;
+    if (isQuerryArray) {
+      value_ = oldValue;
+      oldValue[index] = value;
+      this.#_updateView(chainId, value);
+    } else {
+      modelMap.set(chainId_, value_);
+    }
+    this.#_updateView(chainId_, value_);
 
     return value;
   }
 
-  get(chainId, interpolations) {
-    let modelMap = this._modelMap;
+  setArray(chainId) {
+    let {
+      ok: isCheckOk,
+      oldValue,
+      oldValueType,
+      isQuerryArray,
+    } = this.#_getUpdateInfo(chainId, null);
 
-    if (!modelMap.has(chainId)) {
-      console.error(new Error(
-        _errorMessages.chainIdNotExist.replaceAll('{{chainId}}', chainId),
-      ));
+    if (!isCheckOk || isQuerryArray || oldValueType !== 'array') {
+      return;
+    }
+
+    setTimeout(arrayAddress => {
+      let newValue = this.#_transformPureData(arrayAddress);
+      this._modelMap.set(chainId, newValue);
+      this.#_updateView(chainId, newValue);
+    }, 0, oldValue);
+
+    return oldValue;
+  }
+
+  get(chainId, interpolations) {
+    let {
+      ok: isCheckOk,
+      oldValue,
+      oldValueType,
+      isQuerryArray,
+      index,
+    } = this.#_getUpdateInfo(chainId);
+
+    if (!isCheckOk) {
       return 'N/A';
     }
 
-    let value = modelMap.get(chainId);
+    let value
+      = isQuerryArray ? oldValue[index]
+      : oldValueType === 'array' ? this.#_transformPureData(oldValue)
+      : oldValue
+    ;
     let modelValue = new ModelValue(value);
     return modelValue.getValue(interpolations);
   }
 
   delete(chainId) {
     let modelMap = this._modelMap;
-
     if (modelMap.has(chainId)) {
       modelMap.delete(chainId);
       this.#_updateView(chainId);
@@ -112,60 +313,6 @@ export class ViewModel extends EventEmitter {
 
   async #_updateView(chainId, newValue) {
     this.emit(chainId, new ModelValue(newValue));
-  }
-
-  #_allowTypeof(value, isValue = true) {
-    switch (value == null || value.constructor) {
-      case true: return 'null';
-      case String: return 'string';
-      case Number: return 'number';
-      case Boolean: return 'boolean';
-      case Array: return 'array';
-      case Object:
-        if (isValue) {
-          throw new Error(
-            _errorMessages.modelValueTypeNotExpected
-              .replaceAll('{{type}}', 'object')
-              .replaceAll('{{value}}', JSON.stringify(value)),
-          );
-        }
-        return 'object';
-      default:
-        throw new Error(
-          _errorMessages.modelValueTypeNotExpected
-            .replaceAll('{{type}}', typeof value)
-            .replaceAll('{{value}}', JSON.stringify(value)),
-        );
-    }
-  }
-
-  #_flatModel(data, currChain, newData) {
-    switch (this.#_allowTypeof(data, false)) {
-      case 'null':
-        newData.set(currChain, null);
-        this.#_updateView(currChain, null);
-        break;
-      case 'string':
-      case 'number':
-      case 'boolean':
-        newData.set(currChain, data);
-        this.#_updateView(currChain, data);
-        break;
-      case 'array':
-        for (let val of data) {
-          this.#_allowTypeof(val);
-        }
-        newData.set(currChain, data);
-        this.#_updateView(currChain, data);
-        break;
-      case 'object':
-        Object.entries(data).forEach(
-          item =>
-            this.#_flatModel(item[1], currChain + '.' + item[0], newData),
-        );
-        break;
-    }
-    return newData;
   }
 }
 
