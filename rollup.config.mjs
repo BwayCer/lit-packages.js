@@ -1,4 +1,6 @@
 
+import fs from 'fs';
+import fsPromises from 'fs/promises';
 import path from 'path';
 
 import rollupNodeResolve from '@rollup/plugin-node-resolve';
@@ -54,30 +56,69 @@ let _resolveExternal = (() => {
   };
 })();
 
-let _plugins = [
-  rollupNodeResolve({
-    browser: true,
-    preferBuiltins: false,
-    moduleDirectories: ['node_modules'],
-  }),
-  rollupNodePolyfills(),
-  rollupBabel({
-    babelHelpers: 'bundled',
-    presets: [
-      ['@babel/preset-env', {'targets': 'cover 75%'}],
-    ],
-    plugins: [
-      ['@babel/plugin-proposal-decorators', {'decoratorsBeforeExport': true}],
-      ['@babel/plugin-proposal-class-properties', {'loose': true}],
-      ['@babel/plugin-proposal-private-methods', {'loose': true}],
-      ['@babel/plugin-proposal-private-property-in-object', {'loose': true}],
-    ],
-  }),
-  rollupTerser({
-    compress: true,
-    mangle: true,
-  }),
-];
+
+function _getRollupPlugins(isCompress = true, plugins = []) {
+  return [
+    rollupNodeResolve({
+      browser: true,
+      preferBuiltins: false,
+      moduleDirectories: ['node_modules'],
+    }),
+    rollupNodePolyfills(),
+    rollupBabel({
+      babelHelpers: 'bundled',
+      presets: [
+        ['@babel/preset-env', {'targets': 'cover 75%'}],
+      ],
+      plugins: [
+        ['@babel/plugin-proposal-decorators', {'decoratorsBeforeExport': true}],
+        ['@babel/plugin-proposal-class-properties', {'loose': true}],
+        ['@babel/plugin-proposal-private-methods', {'loose': true}],
+        ['@babel/plugin-proposal-private-property-in-object', {'loose': true}],
+      ],
+    }),
+    ...(isCompress ? [
+      rollupTerser({
+        compress: true,
+        mangle: true
+      }),
+    ] : []),
+    ...plugins,
+  ];
+}
+
+((basePath, htmlInfos) => {
+  let tmplPageText = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>{{title}}</title>
+        <script defer type="module" src="{{scriptUrlPath}}"></script>
+      </head>
+      <body></body>
+    </html>
+  `;
+  htmlInfos.forEach(async ({filePath, title, scriptUrlPath}) => {
+    let filePath_ = path.join(basePath, filePath);
+    await fsPromises.mkdir(path.join(filePath_, '..'), {recursive: true});
+    fsPromises.writeFile(
+      filePath_,
+      tmplPageText
+        .replaceAll('{{title}}', title)
+        .replaceAll('{{scriptUrlPath}}', scriptUrlPath)
+      ,
+      {encoding: 'utf8'},
+    );
+  });
+})(
+  path.join(_basePath, '../docs'), [
+    {
+      filePath: 'viewModel/sample.html',
+      title: 'lit-view-model 範例',
+      scriptUrlPath: '../js/viewModel_sample.js',
+    },
+  ]
+);
 
 export default [
   {
@@ -89,7 +130,7 @@ export default [
     external: _resolveExternal((isEntry, isNativeModules, isExternal) => {
       return !isEntry && isExternal;
     }),
-    plugins: _plugins,
+    plugins: _getRollupPlugins(),
   },
   {
     input: 'src/litViewModel.js',
@@ -99,12 +140,33 @@ export default [
         format: 'es',
       },
       {
+        file: 'docs/js/litViewModel.js',
+        format: 'es',
+      },
+      {
         file: 'dist/litViewModel.browser.umd.js',
         format: 'umd',
         name: 'litViewModel',
       },
     ],
-    plugins: _plugins,
+    plugins: _getRollupPlugins(),
+  },
+  {
+    input:
+      fs.readdirSync(
+        path.join(_basePath, 'docs'),
+        {withFileTypes: true},
+      )
+      .filter(dirent => dirent.isFile())
+      .map(dirent => path.join('src/docs', dirent.name))
+    ,
+    output: {
+      dir: 'docs/js',
+    },
+    external: _resolveExternal((isEntry, isNativeModules, isExternal) => {
+      return !isEntry && !isExternal;
+    }),
+    plugins: _getRollupPlugins(false),
   },
 ];
 
