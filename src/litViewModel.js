@@ -31,19 +31,31 @@ export class ModelValue {
     return this.#_value === undefined;
   }
 
-  getValue(interpolations) {
-    return this.isNA ? 'N/A' : this.interpolate(interpolations);
+  getValue(handleOption = null) {
+    if (this.isNA) {
+      return 'N/A';
+    }
+
+    if (typeof handleOption === 'function') {
+      return handleOption(this);
+    }
+
+    let value = this.#_value;
+    if (
+      this.#_isCanInterpolate
+      && handleOption !== null
+      && typeof handleOption === 'object'
+    ) {
+      value = this.#_interpolate(value, handleOption);
+    }
+    return value;
   }
 
-  interpolate(interpolations) {
-    let txt = this.#_value;
-    return !this.#_isCanInterpolate || interpolations == null
-      ? txt
-      : Object.entries(interpolations).reduce(
-        (accu, [key, value]) => accu.replaceAll(`{{${key}}}`, value),
-        txt,
-      )
-    ;
+  #_interpolate(value, interpolations) {
+    return Object.entries(interpolations).reduce(
+      (accu, [key, val]) => accu.replaceAll(`{{${key}}}`, val),
+      value,
+    );
   }
 }
 
@@ -275,7 +287,7 @@ export class ViewModel extends EventEmitter {
     return oldValue;
   }
 
-  get(chainId, interpolations) {
+  get(chainId, handleOption) {
     let {
       ok: isCheckOk,
       oldValue,
@@ -294,7 +306,7 @@ export class ViewModel extends EventEmitter {
       : oldValue
     ;
     let modelValue = new ModelValue(value);
-    return modelValue.getValue(interpolations);
+    return modelValue.getValue(handleOption);
   }
 
   delete(chainId, isDeleteListener = false) {
@@ -338,7 +350,7 @@ export const viewModel = new ViewModel;
 
 export class LitViewModelDirective extends AsyncDirective {
   #_chainId = '';
-  #_interpolations = null;
+  #_handleOption = null;
 
   constructor(partInfo) {
     super(partInfo);
@@ -353,7 +365,7 @@ export class LitViewModelDirective extends AsyncDirective {
     viewModel.removeListener(this.#_chainId, this.setValue);
   }
 
-  update(part, [chainId, interpolations = null]) {
+  update(part, [chainId, handleOption = null]) {
     let isUpdate = false;
     if (this.#_chainId !== chainId) {
       isUpdate = true;
@@ -362,69 +374,79 @@ export class LitViewModelDirective extends AsyncDirective {
       viewModel.on(chainId, listener);
       this.#_chainId = chainId;
     }
-    if (this.#_interpolationsChanged(interpolations)) {
-      isUpdate = true;
-      this.#_interpolations = interpolations === null
-        ? interpolations
-        : {...interpolations}
-      ;
+
+    let {
+      isUpdate: isUpdate_,
+      handleOption: handleOption_,
+    } = this.#_checkHandleOption(handleOption);
+    if (isUpdate_) {
+      this.#_handleOption = handleOption_;
     }
 
-    return isUpdate
-      ? this.render(chainId, interpolations)
+    return isUpdate || isUpdate_
+      ? this.render(chainId, handleOption_)
       : noChange
     ;
   }
 
-  render(chainId, interpolations = null) {
-    return viewModel.get(chainId, interpolations);
+  render(chainId, handleOption = null) {
+    return viewModel.get(chainId, handleOption);
   }
 
-  updateValue(modelValue, interpolations) {
-    return modelValue.getValue(interpolations);
+  updateValue(modelValue, handleOption) {
+    return modelValue.getValue(handleOption);
   }
 
   setValue = modelValue => {
     super.setValue(modelValue.isNA
       ? 'N/A'
-      : this.updateValue(modelValue, this.#_interpolations),
+      : this.updateValue(modelValue, this.#_handleOption),
     );
   }
 
-  #_interpolationsChanged(interpolations) {
-    let _interpolations = this.#_interpolations;
-
-    if (interpolations !== _interpolations) {
-      return true;
-    }
-    if (interpolations === null) {
-      return false;
+  #_checkHandleOption(handleOption = null) {
+    if (typeof handleOption === 'function') {
+      return {isUpdate: true, handleOption};
     }
 
-    let ip1 = Object.keys(interpolations);
-    let ip2 = Object.keys(_interpolations);
-    if (ip1.length !== ip2.length) {
-      return true;
+    let isNull = false;
+    let interpolations_ = {...handleOption};
+    let interpolationsKeys = Object.keys(interpolations_);
+    if (interpolationsKeys.length === 0) {
+      isNull = true;
+      interpolations_ = null;
     }
 
-    for (let key of ip1) {
-      if (interpolations[key] !== _interpolations[key]) {
-        return true;
+    let oldInterpolations = this.#_handleOption;
+    let isNullForOldValue = oldInterpolations === null;
+
+    let isUpdate = isNull !== isNullForOldValue;
+    if (!isNull && !isNullForOldValue) {
+      isUpdate = true;
+      if (interpolationsKeys.length === oldInterpolations.length) {
+        let isUpdate_ = false;
+        for (let key of interpolationsKeys) {
+          if (interpolations_[key] !== oldInterpolations[key]) {
+            isUpdate_ = true;
+            break;
+          }
+        }
+        isUpdate = isUpdate_;
       }
     }
 
-    return false;
+    return {isUpdate, handleOption: interpolations_};
   }
 }
 
 export class LitViewModelUnsafeHTMLDirective extends LitViewModelDirective {
-  render(chainId, interpolations) {
-    let value = super.render(chainId, interpolations);
+  render(chainId, handleOption = null) {
+    let value = super.render(chainId, handleOption);
     return typeof value === 'symbol' ? value : unsafeHTML(value);
   }
 
-  updateValue(modelValue, interpolations) {
-    let value = super.updateValue(modelValue, interpolations);
+  updateValue(modelValue, handleOption) {
+    let value = super.updateValue(modelValue, handleOption);
     return typeof value === 'symbol' ? value : unsafeHTML(value);
   }
 }
