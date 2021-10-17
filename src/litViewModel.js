@@ -297,7 +297,7 @@ export class ViewModel extends EventEmitter {
     return modelValue.getValue(interpolations);
   }
 
-  delete(chainId) {
+  delete(chainId, isDeleteListener = false) {
     let modelMap = this._modelMap;
     if (modelMap.has(chainId)) {
       modelMap.delete(chainId);
@@ -307,6 +307,18 @@ export class ViewModel extends EventEmitter {
       if (key.startsWith(chainId)) {
         modelMap.delete(key);
         this.#_updateView(chainId);
+      }
+    }
+    if (isDeleteListener) {
+      this.deleteAllListeners(chainId);
+    }
+  }
+
+  deleteAllListeners(chainId) {
+    let eventNames = viewModel.eventNames();
+    for (let key of eventNames) {
+      if (key.startsWith(chainId)) {
+        viewModel.removeAllListeners(key);
       }
     }
   }
