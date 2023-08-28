@@ -7,6 +7,6 @@
     "build": "rollup -c ./rollup.config.mjs"
   },
   "peerDependencies": {
-    "lit": "^2.0.2"
+    "lit": ">=3.0.0-pre.0"
   }
 }
