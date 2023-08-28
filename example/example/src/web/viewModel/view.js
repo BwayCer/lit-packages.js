@@ -3,8 +3,8 @@ import {
   LitElement, html, css,
 } from 'lit';
 import {
-  customElement, property,
-} from 'lit/decorators.js';
+  customElement,
+} from '../assets/decorators.js';
 import {
   viewModel, litViewModel, litViewModelUnsafeHTML,
 } from '../assets/directive/viewModel.js';
@@ -13,12 +13,18 @@ import sampleLitCss from './_sample.lit.js.scss';
 import sampleLitPug from './_sample.lit.js.pug';
 
 
-@customElement('view-model-sample')
+@customElement('view-model-sample', {
+  property: {
+    interpolationName: {
+      type: Object, reflect: true, attribute: 'data-interpolation-name',
+      value: 'litViewModel',
+    },
+  },
+})
 export class ViewModelSample extends LitElement {
-  @property({type: Object, reflect: true, attribute: 'data-interpolation-name'})
-  interpolationName = 'litViewModel';
-
-  static styles = sampleLitCss(css);
+  static get styles() {
+    return sampleLitCss(css);
+  }
 
   _updateCount = 0;
 
