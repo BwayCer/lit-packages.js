@@ -4,7 +4,9 @@
   "description": "About Lit packages.",
   "type": "module",
   "scripts": {
-    "build": "rollup -c ./rollup.config.mjs"
+    "dev": "htRollup server -s ./example/example/src",
+    "dev/firstRollup/lit": "NODE_ENV=dev htRollup build asset -s ./firstRollupSrc/lit -t ./example/example/src -f",
+    "dev/build": "NODE_ENV=dev htRollup build -s ./example/example/src"
   },
   "peerDependencies": {
     "lit": ">=3.0.0-pre.0"
