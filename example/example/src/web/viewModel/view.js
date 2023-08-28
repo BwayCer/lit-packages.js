@@ -1,10 +1,8 @@
 
 import {
-  LitElement, html, css,
-} from 'lit';
-import {
   customElement,
-} from '../assets/decorators.js';
+  LitElement, html, css,
+} from '../assets/lit.js';
 import {
   viewModel, litViewModel, litViewModelUnsafeHTML,
 } from '../assets/directive/viewModel.js';

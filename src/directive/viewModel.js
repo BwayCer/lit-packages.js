@@ -1,8 +1,9 @@
 
 import EventEmitter from 'events';
-import {noChange} from 'lit';
-import {AsyncDirective, directive} from 'lit/async-directive.js';
-import {unsafeHTML} from 'lit/directives/unsafe-html.js';
+import {
+  noChange, unsafeHTML,
+  directive, AsyncDirective,
+} from '../lit.js';
 
 
 const _errorMessages = {
