@@ -1,0 +1,27 @@
+pre
+  code.tagCode
+    | &lt;view-model-sample data-lifecycle-count="${
+    |   args.lifecycleCount
+    | }" data-interpolation-name="${
+    |   args.interpolationName
+    | }"&gt;
+  |
+  |   touchRootElement: <button @click=${
+  |     args.requestUpdateOnClick
+  |   }>requestUpdate</button>
+  |   interpolations: { name: <input type="text" @change=${
+  |     args.interpolationsOnChange
+  |   } value=${args.interpolationName}></input> }
+  |   text: <input class="interpolationNameInput" type="text" @change=${
+  |     evt => args.viewModel.set('main.text', evt.currentTarget.value)
+  |   } value=${args.litViewModel('main.text')}></input>
+  |   state: "${args.litViewModel('main.text', {name: args.interpolationName})}"
+  |   stateHTML: "${args.litViewModelUnsafeHTML('main.text', {name: args.interpolationName})}"
+  |   text length: "${args.litViewModel(
+  |     'main.text',
+  |     modelValue => modelValue.getValue({name: args.interpolationName}).toString().length
+  |   )}"
+  |
+  code.tagCode
+    | &lt;/view-model-sample&gt;
+
