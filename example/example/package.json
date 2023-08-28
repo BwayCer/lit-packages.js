@@ -3,6 +3,7 @@
   "devDependencies": {
     "@babel/plugin-proposal-decorators": "^7.22.10",
     "@babel/preset-env": "^7.22.10",
+    "ip": "^1.1.8",
     "lit": "^3.0.0-pre.0"
   }
 }
