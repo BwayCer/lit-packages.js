@@ -1,6 +1,6 @@
 {
   "name": "@bwaycer/lits",
-  "version": "0.0.0",
+  "version": "0.0.0-alpha.0",
   "description": "About Lit packages.",
   "type": "module",
   "scripts": {
@@ -10,8 +10,15 @@
   },
   "exports": {
     ".": "./src/lit.js",
+    "./directive/elemSelf": "./src/litElemSelfDirective.js",
+    "./directive/viewModel": "./src/viewModel__litViewModelDirective.js",
+    "./utils/NestedName": "./src/NestedName.js",
+    "./utils/tmplWrap": "./src/utils/tmplWrap.js",
+    "./utils/viewMeta": "./src/utils/viewMeta.js",
     "./mod/lit": "./src/mod/lit.js",
     "./useLitPkg": "./src/useLitPkg.js"
+  },
+  "file": {
   },
   "peerDependencies": {
     "lit": ">=3.0.0-pre.0"
