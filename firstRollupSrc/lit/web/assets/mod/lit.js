@@ -22,6 +22,7 @@
 //     TemplateResult
 // - lit/async-directive.js or lit-html:
 //      AttributePart, BooleanAttributePart, PropertyPart, EventPart, ChildPart
+//      (使用 `PartType` 判斷並以字串回傳，應該是用不到所以沒提供吧！)
 
 export * from 'lit';
 

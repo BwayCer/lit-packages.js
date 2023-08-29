@@ -1,0 +1,47 @@
+
+@use 'sass:color';
+
+
+:host {
+  font-size: 16px;
+  line-height: 1.6em;
+  display: block;
+  padding: 1em 0.4em;
+}
+pre {
+  margin: 0;
+}
+.tagCode {
+  background: #000;
+  color: #fff;
+
+  &.onRed {
+    background: #f59a9a;
+    color: color.mix(#7ff, #000, 50%);
+  }
+  &.onGreen {
+    background: #a3d8a3;
+    color: color.mix(#f7f, #000, 50%);
+  }
+  &.onBlue {
+    background: #9ac1e3;
+    color: color.mix(#ff7, #000, 50%);
+  }
+  &.onRed.onGreen {
+    background: #fce38a;
+    color: color.mix(#77f, #000, 50%);
+  }
+  &.onRed.onBlue {
+    background: #f7d9e3;
+    color: color.mix(#7f7, #000, 50%);
+  }
+  &.onGreen.onBlue {
+    background: #a3efef;
+    color: color.mix(#f77, #000, 50%);
+  }
+  &.onRed.onGreen.onBlue {
+    background: #fff;
+    color: #000;
+  }
+}
+
