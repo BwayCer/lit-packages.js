@@ -3,28 +3,26 @@
 // export * from 'lit/decorators.js';
 
 
-// lit@v2 old version
-// export {
-  // AttributeCommitter, AttributePart, BooleanAttributePart, CSSResult, DefaultTemplateProcessor, EventPart, LitElement, NodePart, PropertyCommitter, PropertyPart, ReactiveElement, SVGTemplateResult, Template, TemplateInstance, TemplateResult, adoptStyles, createMarker, css, defaultConverter, defaultTemplateProcessor, directive, getCompatibleStyle, html, isDirective, isIterable, isPrimitive, isTemplatePartActive, noChange, notEqual, nothing, parts, removeNodes, render, reparentNodes, supportsAdoptingStyleSheets, svg, templateCaches, templateFactory, unsafeCSS,
-// } from 'lit';
+// NOTE:
+// v3 vs v2 difference:
+// - not found:
+//   - lit:
+//       (排除分散到各文件的方法，
+//        剩下的大部分是筆者沒用過的，所以也不知是被移除或者提供新的替代物)
+//       SVGTemplateResult, Template, TemplateInstance, TemplateResult,
+//       isDirective, isIterable, isPrimitive, isTemplatePartActive, parts,
+//   - lit/async-directive.js or lit-html:
+//        AttributePart, BooleanAttributePart, PropertyPart, EventPart, ChildPart
+//        (猜測是建議使用 `PartType` 判斷並以字串回傳，所以用不到就沒提供吧！)
 
 // lit@v3
-// export {
-  // CSSResult, LitElement, ReactiveElement, adoptStyles,
-  // css, defaultConverter, getCompatibleStyle, html,
-  // noChange, notEqual, nothing,
-  // render, supportsAdoptingStyleSheets, svg, unsafeCSS,
-// } from 'lit';
-
-// NOTE:
-// not found:
-// - lit:
-//     TemplateResult
-// - lit/async-directive.js or lit-html:
-//      AttributePart, BooleanAttributePart, PropertyPart, EventPart, ChildPart
-//      (使用 `PartType` 判斷並以字串回傳，應該是用不到所以沒提供吧！)
-
-export * from 'lit';
+export {
+  'CSSResult', 'LitElement', 'ReactiveElement', 'adoptStyles', 'css',
+  'defaultConverter', 'getCompatibleStyle', 'html', 'isServer', 'noChange',
+  'notEqual', 'nothing', 'render', 'supportsAdoptingStyleSheets', 'svg',
+  'unsafeCSS'
+  // _$LE, _$LH,
+} from 'lit';
 
 
 export {directive, Directive, PartType} from 'lit/directive.js';
