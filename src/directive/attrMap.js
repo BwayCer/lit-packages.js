@@ -2,7 +2,7 @@
 import {
   noChange,
   directive, Directive, PartType,
-} from '../lit';
+} from '../_mod/lit.js';
 
 
 class AttrMap extends Directive {

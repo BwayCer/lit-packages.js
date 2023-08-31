@@ -3,7 +3,7 @@ import EventEmitter from 'events';
 import {
   noChange, unsafeHTML,
   directive, AsyncDirective,
-} from '../lit.js';
+} from '../_mod/lit.js';
 
 
 const _errorMessages = {

@@ -2,21 +2,10 @@
 export {customElement} from './decorators.js';
 
 
+export * from './_mod/lit.js';
+
+export {attrMap} from './directive/attrMap.js';
 export {
-  // lit
-  LitElement, html, css,
-  noChange,
-
-  // lit/directive.js
-  directive, Directive, PartType,
-
-  // lit/directive/*
-  cache, classMap, repeat, styleMap, unsafeHTML,
-
-  // lit/async-directive.js
-  AsyncDirective,
-
-  // lit/static-html.js
-  unsafeStatic
-} from './mod/lit.js';
+  viewModel, litViewModel, litViewModelUnsafeHTML,
+} from './directive/viewModel.js';
 

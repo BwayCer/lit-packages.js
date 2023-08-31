@@ -2,10 +2,8 @@
 import {
   customElement,
   LitElement, html, css,
-} from '../assets/lit.js';
-import {
   viewModel, litViewModel, litViewModelUnsafeHTML,
-} from '../assets/directive/viewModel.js';
+} from '../plugin/litPkg.js';
 
 import sampleLitCss from './_sample.lit.js.scss';
 import sampleLitPug from './_sample.lit.js.pug';

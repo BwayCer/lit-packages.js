@@ -1,1 +1,1 @@
-../../firstRollupSrc/lit/web/assets/mod/lit.js
+../../firstRollupSrc/lit/web/plugin/mod/lit.js

@@ -2,11 +2,8 @@
 import {
   customElement,
   LitElement, html, css,
-  classMap,
-} from '../assets/lit.js';
-import {
-  attrMap,
-} from '../assets/directive/attrMap.js';
+  classMap, attrMap,
+} from '../plugin/litPkg.js';
 
 import sampleLitCss from './_sample.lit.js.scss';
 import sampleLitPug from './_sample.lit.js.pug';
