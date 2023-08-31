@@ -1,0 +1,1 @@
+../../firstRollupSrc/lit/web/plugin/mod/lit.js

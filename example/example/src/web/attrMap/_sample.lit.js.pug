@@ -1,0 +1,23 @@
+pre
+  | !{"<code class=\"tagCode ${args.classMap}\" ${args.attrMap}>"}&lt;attr-map-sample${
+  |   args.classListTxt ? ` class="${args.classListTxt}"` : ''
+  | }${
+  |   args.attrListTxt ? ' ' + args.attrListTxt : ''
+  | }&gt;!{"</code>"}
+  |   <button @click=${
+  |     args.redToggleOnClick
+  |   }>Red [${
+  |     args.classInfo.onRed ? 'open' : 'close'
+  |   }]</button> | <button @click=${
+  |     args.greenToggleOnClick
+  |   }>Green [${
+  |     args.classInfo.onGreen ? 'open' : 'close'
+  |   }]</button> | <button @click=${
+  |     args.blueToggleOnClick
+  |   }>Blue [${
+  |     args.classInfo.onBlue ? 'open' : 'close'
+  |   }]</button>
+  |
+  code.tagCode(class="${args.classMap}")
+    | &lt;/attr-map-sample&gt;
+
