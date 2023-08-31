@@ -1,5 +1,9 @@
 {
   "type": "module",
+  "scripts": {
+    "dev": "htRollup server",
+    "build": "NODE_ENV=dev htRollup build"
+  },
   "devDependencies": {
     "@babel/plugin-proposal-decorators": "^7.22.10",
     "@babel/preset-env": "^7.22.10",
