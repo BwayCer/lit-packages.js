@@ -1,0 +1,12 @@
+
+/node_modules
+/example/**/node_modules/
+
+/example/**/_tmp-*.byHtRollup.*
+
+/example/avoidPackSameMod/modules/lit/*
+!/example/avoidPackSameMod/modules/lit/_init.sh
+
+# docs/
+# **/dist/
+
